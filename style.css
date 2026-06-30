@@ -1,0 +1,300 @@
+/* ================= 1. GENEL SIFIRLAMA ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent; 
+    outline: none; 
+}
+
+html, body {
+    width: 100%;
+    height: 100dvh; 
+    background-color: #1a1a1a; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; 
+}
+
+/* ================= 2. ANA KONTEYNER (16:9 KİLİDİ) ================= */
+.app-container {
+    position: relative;
+    width: 100vw;
+    height: 56.25vw;
+    max-height: 100dvh; 
+    max-width: 177.78dvh;
+    background-color: #e4e4e4;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    margin: auto;
+    overflow: hidden; 
+}
+
+/* ================= 3. GÖRSEL KATMANLAR ================= */
+.viewer-wrapper {
+    position: absolute;
+    inset: 0;
+}
+
+.render-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    pointer-events: none; 
+    transition: opacity 0.4s ease-in-out; 
+}
+
+/* ================= 4. HOTSPOT VE İŞARETÇİLER ================= */
+.hotspot {
+    position: absolute;
+    cursor: pointer;
+    background: transparent; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Milimetrik tıklama koordinatları */
+#hotspot-koltuk  { top: 45.37%; left: 3.69%; width: 64.79%; height: 41.94%; z-index: 55; }
+#hotspot-berjer  { top: 42.22%; left: 73.33%; width: 25.15%; height: 38.05%; z-index: 55; }
+#hotspot-kirlent { top: 47.77%; left: 42.39%; width: 11.45%; height: 18.61%; z-index: 60; }
+#hotspot-bel     { top: 54.35%; left: 22.03%; width: 8.28%; height: 15.18%; z-index: 61; }
+#hotspot-ayak    { top: 79.62%; left: 0%; width: 100%; height: 20.37%; z-index: 50; }
+
+/* Nefes Alan Parlak Halka (Görsel İpucu) */
+.hotspot-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5), 0 0 0 4px rgba(255,255,255,0.3);
+    opacity: 0; 
+    transform: scale(0);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none; 
+}
+
+.hotspot-dot::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: hotspotPulse 2s infinite ease-out;
+}
+
+@keyframes hotspotPulse {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+.show-hints .hotspot-dot {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ================= 5. BİLGİ BALONCUĞU (TOOLTIP) ================= */
+.cursor-tooltip {
+    position: fixed; 
+    top: 0; left: 0;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    pointer-events: none; 
+    z-index: 9999;
+    opacity: 0;
+    transform: translate(-50%, -150%);
+    transition: opacity 0.2s ease;
+    backdrop-filter: blur(5px);
+}
+
+/* ================= 6. OVERLAY (ÖLÇÜLER & VİDEO) ================= */
+.measurements-overlay, .video-overlay {
+    position: fixed; 
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+/* Hata önleyici kesin gizleme sınıfı */
+.hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.measurements-overlay img {
+    max-width: 95%;
+    max-height: 95%;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+/* VİDEO RESPONSIVE AYARI BURADA YAPILDI */
+.video-overlay video {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* SİHİRLİ KELİME: Videoyu kesmez, ekrana sığdırır */
+    background-color: #000; /* Boşlukları sinema perdesi gibi siyah yapar */
+}
+
+.close-video-btn {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    z-index: 100000;
+}
+.close-video-btn:hover { background: rgba(255, 255, 255, 0.4); transform: scale(1.1); }
+
+/* ================= 7. KOYU CAM BUTONLAR (DARK GLASSMORPHISM) ================= */
+.top-left-actions {
+    position: absolute;
+    top: 30px; 
+    left: 30px;
+    display: flex;
+    gap: 15px;
+    z-index: 100;
+}
+
+.top-right-actions {
+    position: absolute;
+    top: 30px; 
+    right: 90px; 
+    display: flex;
+    gap: 15px;
+    z-index: 100;
+}
+
+.glass-btn {
+    background: rgba(0, 0, 0, 0.45); 
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    padding: 12px 25px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+.glass-btn:hover { 
+    background: rgba(0, 0, 0, 0.65); 
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px); 
+}
+
+.highlight-video {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+.highlight-video:hover { background: rgba(255, 255, 255, 0.3); }
+
+.action-highlight { background: rgba(0, 0, 0, 0.85); color: #fff; border-color: rgba(255, 255, 255, 0.1); }
+.action-highlight:hover { background: #000; }
+
+.whatsapp-btn { background: rgba(37, 211, 102, 0.85); color: white; border-color: rgba(255, 255, 255, 0.3); }
+.whatsapp-btn:hover { background: #25D366; transform: translateY(-2px); }
+
+.fs-btn {
+    position: absolute;
+    top: 30px; right: 30px;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.45); 
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    cursor: pointer; font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+.fs-btn:hover { transform: scale(1.1); background: rgba(0, 0, 0, 0.7);}
+
+/* ================= 8. MOBİL (DİKEY - PORTRAIT) UYUMU ================= */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    html, body {
+        background-color: #1a1a1a; 
+        align-items: center; 
+        padding-top: 0; 
+    }
+    
+    .app-container { box-shadow: none; }
+
+    .top-left-actions {
+        position: fixed;
+        top: calc(20px + env(safe-area-inset-top, 10px)); 
+        left: 5%;
+        width: 70%; 
+        display: flex;
+        flex-direction: column; 
+        gap: 10px;
+    }
+
+    .top-right-actions { 
+        position: fixed;
+        top: calc(125px + env(safe-area-inset-top, 10px)); 
+        left: 5%;
+        width: 90%;
+        display: flex;
+        flex-direction: column; 
+        gap: 10px;
+        transform: none; 
+    }
+
+    .glass-btn { width: 100%; padding: 14px; font-size: 13px; }
+
+    .fs-btn { 
+        position: fixed;
+        top: 20px; right: 20px;
+        width: 40px; height: 40px;
+    }
+    
+    .cursor-tooltip { display: none !important; }
+}
+
+/* ================= 9. MOBİL (YATAY - LANDSCAPE) UYUMU ================= */
+@media screen and (max-width: 950px) and (orientation: landscape) {
+    html, body { background-color: #1a1a1a; align-items: center; padding-top: 0; }
+    .top-right-actions { position: absolute; top: 10px; right: 65px; left: auto; width: auto; transform: scale(0.75); transform-origin: top right; }
+    .top-left-actions { position: absolute; top: 10px; left: 10px; width: auto; transform: scale(0.75); transform-origin: top left; }
+    .fs-btn { position: absolute; top: 10px; right: 10px; transform: scale(0.75); }
+    .cursor-tooltip { display: none !important; }
+}
